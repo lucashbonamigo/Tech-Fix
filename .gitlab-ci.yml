@@ -1,0 +1,62 @@
+stages:          
+  - build
+  - test
+  - documentation
+  - deploy
+
+include:
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+
+build-job:       # This job runs in the build stage, which runs first.
+  stage: build
+  before_script:
+    - echo "Preparendo Tests"
+    - chmod +x ./script.sh
+  script:
+    - ./script.sh
+
+unit-test-job:
+  image: 
+  stage: test    # It only starts when the job in the build stage completes successfully.
+  script:
+    - echo "Running unit tests... This will take about 60 seconds."
+    - sleep 6
+    - echo "Code coverage is 90%"
+
+unit-test-job-second:
+  image: node:19.1
+  needs: 
+    - unit-test-job
+  stage: test
+  script:
+    - npm version
+    - echo "Running unit tests... This will take about 60 seconds."
+    - sleep 6
+  
+
+lint-test-job:   # This job also runs in the test stage.
+  stage: test    # It can run at the same time as unit-test-job (in parallel).
+  script:
+    - echo "Linting code... This will take about 10 seconds."
+    - sleep 1
+    - echo "No lint issues found."
+
+genarate-documentation:
+  stage: documentation
+  image: node:18
+  before_script:
+    - npm i -g @aws/amazon-q-developer-cli
+  script: 
+    - q chat --non-interactive "Crie a documentação do reposítório com a estrutura, Descrição, conteúdo, explicação" > readme.md
+    - git add . 
+    - git commit -m "Auto-generated documentation [skip ci]"
+    - git push
+  only:
+    - main
+
+deploy-job:      # This job runs in the deploy stage.
+  environment: production 
+  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
+  script:
+    - echo "Deploying application..."
+    - echo "Application successfully deployed."
