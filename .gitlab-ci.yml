@@ -10,7 +10,8 @@ include:
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
   before_script:
-    - echo "Preparendo Tests"
+    - echo "Starting build process..."
+    - sudo docker build -t techfix-api .
     - chmod +x ./script.sh
   script:
     - ./script.sh
